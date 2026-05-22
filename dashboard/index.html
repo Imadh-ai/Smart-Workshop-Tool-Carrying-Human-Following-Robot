@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workshop Robot • Live Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="bg-orb orb-a"></div>
+  <div class="bg-orb orb-b"></div>
+
+  <main class="app">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">🤖</div>
+        <div class="brand-text">
+          <h1>Workshop Robot</h1>
+          <p class="subtitle">Real-time IoT + Robotics Telemetry</p>
+        </div>
+      </div>
+
+      <div class="chips">
+        <div class="chip" id="statusBadge" title="Robot connection status">
+          <span class="dot"></span>
+          <span class="chip-text" id="statusText">Disconnected</span>
+        </div>
+
+        <div class="chip" id="wifiBadge" title="Wi-Fi RSSI from ESP32">
+          <span class="dot"></span>
+          <span class="chip-text" id="wifiText">WiFi: Unknown</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Alerts (same ids used by JS) -->
+    <section class="alert card" id="alertSection" style="display:none;">
+      <div class="alert-left">
+        <div class="alert-icon" aria-hidden="true">⚠️</div>
+        <div class="alert-text">
+          <h3 id="alertTitle">Alert</h3>
+          <p id="alertMessage">No alerts</p>
+        </div>
+      </div>
+      <div class="alert-actions">
+        <button class="ghost" id="dismissAlertBtn" type="button">Dismiss</button>
+      </div>
+    </section>
+
+    <!-- Content grid -->
+    <section class="grid">
+      <!-- Telemetry card -->
+      <article class="card telemetry">
+        <div class="card-head">
+          <h2>Live Telemetry</h2>
+          <div class="pill" id="modePill">
+            <span class="pill-label">Mode</span>
+            <span class="pill-value" id="mode">Manual</span>
+          </div>
+        </div>
+
+        <div class="telemetry-grid">
+          <div class="metric">
+            <div class="metric-top">
+              <span class="metric-label">Distance</span>
+              <span class="metric-badge">Ultrasonic</span>
+            </div>
+            <div class="metric-value" id="distance">-- cm</div>
+            <div class="metric-sub" id="distanceHint">Within 0–20cm follows (if RSSI allows)</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-top">
+              <span class="metric-label">Air Quality</span>
+              <span class="metric-badge">MQ-2</span>
+            </div>
+            <div class="metric-value" id="airQuality">--</div>
+            <div class="metric-sub">
+              Raw: <span class="mono" id="mq2Raw">--</span>
+              <span class="sep">•</span>
+              Baseline: <span class="mono" id="mq2Baseline">--</span>
+            </div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-top">
+              <span class="metric-label">Flame</span>
+              <span class="metric-badge">Sensor</span>
+            </div>
+            <div class="metric-value" id="flameStatus">--</div>
+            <div class="metric-sub" id="flameHint">Safety override stops motors</div>
+          </div>
+
+          <div class="metric">
+            <div class="metric-top">
+              <span class="metric-label">Wi-Fi RSSI</span>
+              <span class="metric-badge">ESP32</span>
+            </div>
+            <div class="metric-value">
+              <span id="rssiValue">-- dBm</span>
+            </div>
+            <div class="metric-sub">
+              Quality: <span id="signalQuality">--</span>
+              <span class="sep">•</span>
+              Follow allowed: <span id="followAllowed">--</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="telemetry-foot">
+          <div class="tiny">
+            Last update: <span class="mono" id="lastUpdated">--</span>
+          </div>
+          <div class="tiny">
+            Tip: move phone closer to reach strong RSSI (e.g., -20 to -30 dBm)
+          </div>
+        </div>
+      </article>
+
+      <!-- Controls card -->
+      <article class="card controls">
+        <div class="card-head">
+          <h2>Robot Control</h2>
+          <p class="muted">Hold buttons to move. Stop is instant.</p>
+        </div>
+
+        <div class="control-wrap">
+          <button class="btn ctrl" id="forwardBtn" aria-label="Forward">
+            <span class="btn-ico">▲</span>
+            <span class="btn-txt">Forward</span>
+          </button>
+
+          <div class="control-row">
+            <button class="btn ctrl" id="leftBtn" aria-label="Left">
+              <span class="btn-ico">◀</span>
+              <span class="btn-txt">Left</span>
+            </button>
+
+            <button class="btn stop" id="stopBtn" aria-label="Stop">
+              <span class="btn-ico">■</span>
+              <span class="btn-txt">STOP</span>
+            </button>
+
+            <button class="btn ctrl" id="rightBtn" aria-label="Right">
+              <span class="btn-ico">▶</span>
+              <span class="btn-txt">Right</span>
+            </button>
+          </div>
+
+          <button class="btn ctrl" id="backwardBtn" aria-label="Backward">
+            <span class="btn-ico">▼</span>
+            <span class="btn-txt">Backward</span>
+          </button>
+        </div>
+
+        <div class="mode-toggle">
+          <button class="btn mode active" id="manualModeBtn" type="button">
+            Manual Mode
+          </button>
+          <button class="btn mode" id="followModeBtn" type="button">
+            Follow Mode
+          </button>
+        </div>
+
+        <div class="note">
+          <div class="note-dot"></div>
+          <p>
+            Follow Mode uses IR sensors + ultrasonic distance.
+            RSSI gating decides whether follow is allowed.
+          </p>
+        </div>
+      </article>
+
+      <!-- Showcase card -->
+      <article class="card showcase">
+        <div class="card-head">
+          <h2>Project Highlights</h2>
+          <p class="muted">Perfect for screenshots and LinkedIn.</p>
+        </div>
+
+        <ul class="bullets">
+          <li>ESP32 robotics control + Firebase RTDB streaming telemetry</li>
+          <li>Manual control + autonomous follow logic (IR + ultrasonic)</li>
+          <li>Safety sensors: flame detection and gas/smoke (MQ-2)</li>
+          <li>Real-time dashboard: status, RSSI, mode, and sensor values</li>
+        </ul>
+
+        <div class="cta">
+          <div class="cta-left">
+            <div class="cta-title">Want it even cooler?</div>
+            <div class="cta-sub">I can add charts + history without changing Firebase structure.</div>
+          </div>
+          <div class="cta-right">
+            <span class="tag">Realtime</span>
+            <span class="tag">Responsive</span>
+            <span class="tag">Modern UI</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <span>Group 02 • Smart Workshop Robot</span>
+      <span class="sep">•</span>
+      <span class="mono">Firebase RTDB</span>
+    </footer>
+  </main>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>
